@@ -4,7 +4,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/peter9207/F/S/shapes"
+	"github.com/peter9207/black/shapes"
 )
 
 var _ = Describe("LinkedList", func() {

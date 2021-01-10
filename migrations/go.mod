@@ -1,4 +1,4 @@
-module github.com/peter9207/F/S/migrations
+module github.com/peter9207/black/migrations
 
 go 1.16
 
