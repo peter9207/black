@@ -6,6 +6,7 @@ import (
 	"github.com/peter9207/black/datapoint"
 	"github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
+	"path"
 	"time"
 )
 
@@ -28,16 +29,16 @@ var groupMaxCmd = &cobra.Command{
 		}
 
 		csvFile := args[0]
-		stocks, err := readExport(csvFile)
+		name := path.Base(csvFile)
+
+		stocks, err := readExport(name, csvFile)
 		if err != nil {
 			panic(err)
-			return
 		}
 
 		data := []datapoint.Data{}
 		for _, v := range stocks {
 
-			fmt.Println("stuffs")
 			d := datapoint.Data{
 				Name:  v.Date,
 				Value: v.High,
@@ -53,8 +54,7 @@ var groupMaxCmd = &cobra.Command{
 		results := datapoint.GroupDatapointsByMonth(data)
 
 		for _, v := range results {
-			fmt.Println("saving")
-			if err := saveDatapoint(v, db); err != nil {
+			if err := saveDatapoint(v, name, db); err != nil {
 				fmt.Println(err.Error())
 			}
 		}
@@ -71,7 +71,7 @@ type Properties struct {
 	CreatedAt time.Time
 }
 
-func saveDatapoint(data datapoint.Data, db *pg.DB) (err error) {
+func saveDatapoint(data datapoint.Data, name string, db *pg.DB) (err error) {
 
 	prop := &Properties{
 		ID:        uuid.NewV4().String(),
@@ -79,6 +79,7 @@ func saveDatapoint(data datapoint.Data, db *pg.DB) (err error) {
 		Value:     data.Value,
 		Type:      "MonthlyMax",
 		CreatedAt: time.Now(),
+		Meta:      name,
 	}
 
 	_, err = db.Model(prop).Insert()

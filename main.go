@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/peter9207/black/predictors"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"io"
 	"log"
 	"os"
@@ -21,9 +22,10 @@ type Stock struct {
 	Close    float64
 	AdjClose float64
 	Volume   int64
+	Name     string
 }
 
-func readExport(filename string) (stocks []Stock, err error) {
+func readExport(stockName, filename string) (stocks []Stock, err error) {
 
 	f, _ := os.Open(filename)
 	reader := csv.NewReader(bufio.NewReader(f))
@@ -50,6 +52,7 @@ func readExport(filename string) (stocks []Stock, err error) {
 			Close:    parseFloat(line[4]),
 			AdjClose: parseFloat(line[5]),
 			Volume:   parseInt(line[6]),
+			Name:     stockName,
 		})
 	}
 
@@ -76,7 +79,7 @@ var simpleCmd = &cobra.Command{
 	Short: "a simple rolling average calculation",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) < 1 {
+		if len(args) < 2 {
 			err := cmd.Help()
 			if err != nil {
 				panic(err)
@@ -84,8 +87,9 @@ var simpleCmd = &cobra.Command{
 			return
 		}
 
-		csvFile := args[0]
-		stocks, err := readExport(csvFile)
+		csvFile := args[1]
+		name := args[0]
+		stocks, err := readExport(name, csvFile)
 
 		if err != nil {
 			log.Fatal(err)
@@ -120,7 +124,7 @@ var simpleCmd = &cobra.Command{
 			event := RollingWindowCrossingEvent{
 				Value:      v.Value,
 				Window:     10,
-				Meta:       "",
+				Meta:       name,
 				Increasing: v.Increasing,
 				Date:       t.Unix(),
 			}
@@ -167,7 +171,34 @@ var rootCmd = &cobra.Command{
 	Short: "an attempt to try various means of analysing stocks data",
 }
 
+var initConfig = &cobra.Command{
+	Use:   "init",
+	Short: "init a config file",
+	Run: func(cmd *cobra.Command, args []string) {
+		err := viper.SafeWriteConfig()
+		if err != nil {
+			panic(err)
+		}
+	},
+}
+
 func main() {
+
+	viper.SetConfigName("config")
+	viper.AddConfigPath(".")
+	viper.SetConfigType("yaml")
+
+	viper.SetDefault("DATABASE_URL", "postgres://postgres:password@localhost:5432/postgres?sslmode=disable")
+	viper.SetDefault("AA_APIKEY", "no_default")
+
+	err := viper.ReadInConfig()
+	if err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			fmt.Println("Config file not found...")
+		} else {
+			panic(err)
+		}
+	}
 
 	testCmd.AddCommand(esCmd)
 	rootCmd.AddCommand(simpleCmd)
@@ -175,6 +206,9 @@ func main() {
 
 	rootCmd.AddCommand(groupCmd)
 	groupCmd.AddCommand(groupMaxCmd)
+
+	rootCmd.AddCommand(fetchCmd)
+	rootCmd.AddCommand(initConfig)
 
 	rootCmd.Execute()
 }
