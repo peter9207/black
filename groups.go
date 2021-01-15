@@ -1,12 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"github.com/go-pg/pg/v10"
 	"github.com/peter9207/black/datapoint"
 	"github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
-	"path"
 	"time"
 )
 
@@ -28,36 +26,36 @@ var groupMaxCmd = &cobra.Command{
 			return
 		}
 
-		csvFile := args[0]
-		name := path.Base(csvFile)
+		// csvFile := args[0]
+		// name := path.Base(csvFile)
 
-		stocks, err := readExport(name, csvFile)
-		if err != nil {
-			panic(err)
-		}
+		// stocks, err := readExport(name, csvFile)
+		// if err != nil {
+		// 	panic(err)
+		// }
 
-		data := []datapoint.Data{}
-		for _, v := range stocks {
+		// data := []datapoint.Data{}
+		// for _, v := range stocks {
 
-			d := datapoint.Data{
-				Name:  v.Date,
-				Value: v.High,
-			}
-			data = append(data, d)
-		}
+		// 	d := datapoint.Data{
+		// 		Name:  v.Date,
+		// 		Value: v.High,
+		// 	}
+		// 	data = append(data, d)
+		// }
 
-		db, err := ConnectDB("postgres://postgres:password@localhost:5432/postgres?sslmode=disable")
-		if err != nil {
-			panic(err)
-		}
+		// db, err := ConnectDB("postgres://postgres:password@localhost:5432/postgres?sslmode=disable")
+		// if err != nil {
+		// 	panic(err)
+		// }
 
-		results := datapoint.GroupDatapointsByMonth(data)
+		// results := datapoint.GroupDatapointsByMonth(data)
 
-		for _, v := range results {
-			if err := saveDatapoint(v, name, db); err != nil {
-				fmt.Println(err.Error())
-			}
-		}
+		// for _, v := range results {
+		// 	if err := saveDatapoint(v, name, db); err != nil {
+		// 		fmt.Println(err.Error())
+		// 	}
+		// }
 
 	},
 }

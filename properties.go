@@ -6,7 +6,6 @@ import (
 )
 
 func ConnectDB(url string) (db *pg.DB, err error) {
-
 	opt, err := pg.ParseURL(url)
 	if err != nil {
 		return

@@ -1,8 +1,10 @@
-package main
+package fetchers
 
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/go-pg/pg/v10"
+	"github.com/satori/go.uuid"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -10,18 +12,31 @@ import (
 
 var requestURLTemplate = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=%s&outputsize=full&apikey=%s"
 
+type Fetcher interface {
+	Fetch(ticker string) error
+}
+
 type AlphaAdvantage struct {
 	ApiKey string
+	DB     *pg.DB
+}
+
+type Stock struct {
+	ID    string
+	Code  string
+	Date  string
+	Open  float64
+	High  float64
+	Low   float64
+	Close float64
+	// AdjClose float64
+	Volume int64
+	// Name     string
 }
 
 type AAResponse struct {
 	Metadata map[string]string `json:"Meta Data"`
 	Data     map[string]AAData `json:"Time Series (Daily)"`
-}
-
-type StockData struct {
-	Name string
-	Data []Stock
 }
 
 type AAData struct {
@@ -86,9 +101,10 @@ func (a *AAData) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (aa *AlphaAdvantage) fetch(ticker string) (stocks *StockData, err error) {
+func (aa *AlphaAdvantage) Fetch(ticker string) (err error) {
+	fmt.Println("start")
 
-	stocks = &StockData{}
+	// stocks = &StockData{}
 
 	var url = fmt.Sprintf(requestURLTemplate, ticker, aa.ApiKey)
 	fmt.Println("fetching data from ", url)
@@ -113,21 +129,25 @@ func (aa *AlphaAdvantage) fetch(ticker string) (stocks *StockData, err error) {
 	}
 
 	stockName := response.Metadata["2. Symbol"]
-	stocks.Name = stockName
 	fmt.Println("name", stockName)
 
 	for k, v := range response.Data {
 
-		s := Stock{
+		s := &Stock{
+			ID:     uuid.NewV4().String(),
 			Date:   k,
-			Name:   stockName,
+			Code:   ticker,
 			Open:   v.Open,
 			Close:  v.Close,
 			High:   v.High,
 			Low:    v.Low,
 			Volume: v.Volume,
 		}
-		stocks.Data = append(stocks.Data, s)
+		// stocks.Data = append(stocks.Data, s)
+		_, err = aa.DB.Model(s).Insert()
+		if err != nil {
+			fmt.Println(err.Error())
+		}
 	}
 	return
 }

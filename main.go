@@ -1,62 +1,44 @@
 package main
 
 import (
-	"bufio"
-	"encoding/csv"
 	"fmt"
-	"github.com/peter9207/black/predictors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"io"
 	"log"
-	"os"
 	"strconv"
-	"time"
 )
+// func readExport(stockName, filename string) (stocks []Stock, err error) {
 
-type Stock struct {
-	Date     string
-	Open     float64
-	High     float64
-	Low      float64
-	Close    float64
-	AdjClose float64
-	Volume   int64
-	Name     string
-}
+// 	f, _ := os.Open(filename)
+// 	reader := csv.NewReader(bufio.NewReader(f))
+// 	first := true
+// 	for {
+// 		var line []string
+// 		line, err = reader.Read()
+// 		if err == io.EOF {
+// 			return stocks, nil
+// 		} else if err != nil {
+// 			log.Fatal(err)
+// 			return
+// 		}
+// 		if first {
+// 			first = false
+// 			continue
+// 		}
 
-func readExport(stockName, filename string) (stocks []Stock, err error) {
+// 		stocks = append(stocks, Stock{
+// 			Date:     line[0],
+// 			Open:     parseFloat(line[1]),
+// 			High:     parseFloat(line[2]),
+// 			Low:      parseFloat(line[3]),
+// 			Close:    parseFloat(line[4]),
+// 			AdjClose: parseFloat(line[5]),
+// 			Volume:   parseInt(line[6]),
+// 			Name:     stockName,
+// 		})
+// 	}
 
-	f, _ := os.Open(filename)
-	reader := csv.NewReader(bufio.NewReader(f))
-	first := true
-	for {
-		var line []string
-		line, err = reader.Read()
-		if err == io.EOF {
-			return stocks, nil
-		} else if err != nil {
-			log.Fatal(err)
-			return
-		}
-		if first {
-			first = false
-			continue
-		}
-
-		stocks = append(stocks, Stock{
-			Date:     line[0],
-			Open:     parseFloat(line[1]),
-			High:     parseFloat(line[2]),
-			Low:      parseFloat(line[3]),
-			Close:    parseFloat(line[4]),
-			AdjClose: parseFloat(line[5]),
-			Volume:   parseInt(line[6]),
-			Name:     stockName,
-		})
-	}
-
-}
+// }
 
 func parseFloat(s string) (f float64) {
 	var err error
@@ -87,56 +69,56 @@ var simpleCmd = &cobra.Command{
 			return
 		}
 
-		csvFile := args[1]
-		name := args[0]
-		stocks, err := readExport(name, csvFile)
+		// csvFile := args[1]
+		// name := args[0]
+		// stocks, err := readExport(name, csvFile)
 
-		if err != nil {
-			log.Fatal(err)
-			return
-		}
+		// if err != nil {
+		// 	log.Fatal(err)
+		// 	return
+		// }
 
-		data := []float64{}
-		for _, v := range stocks {
-			data = append(data, v.Close)
-		}
+		// data := []float64{}
+		// for _, v := range stocks {
+		// 	data = append(data, v.Close)
+		// }
 
-		producer, err := NewEventProducer()
-		if err != nil {
-			panic(err)
-		}
+		// producer, err := NewEventProducer()
+		// if err != nil {
+		// 	panic(err)
+		// }
 
-		p := predictors.SimpleRolling(10)
-		result := p.POI(data)
+		// p := predictors.SimpleRolling(10)
+		// result := p.POI(data)
 
-		format := "2006-01-02"
+		// format := "2006-01-02"
 
-		for _, v := range result {
+		// for _, v := range result {
 
-			date := stocks[v.Index].Date
+		// 	date := stocks[v.Index].Date
 
-			t, err := time.Parse(format, date)
-			if err != nil {
-				fmt.Println("error parsing date", date)
-				continue
-			}
+		// 	t, err := time.Parse(format, date)
+		// 	if err != nil {
+		// 		fmt.Println("error parsing date", date)
+		// 		continue
+		// 	}
 
-			event := RollingWindowCrossingEvent{
-				Value:      v.Value,
-				Window:     10,
-				Meta:       name,
-				Increasing: v.Increasing,
-				Date:       t.Unix(),
-			}
+		// 	event := RollingWindowCrossingEvent{
+		// 		Value:      v.Value,
+		// 		Window:     10,
+		// 		Meta:       name,
+		// 		Increasing: v.Increasing,
+		// 		Date:       t.Unix(),
+		// 	}
 
-			err = producer.produceEvent(event)
-			if err != nil {
-				fmt.Println("error producing", err)
-			}
+		// 	err = producer.produceEvent(event)
+		// 	if err != nil {
+		// 		fmt.Println("error producing", err)
+		// 	}
 
-		}
+		// }
 
-		log.Printf("result: %v", result)
+		// log.Printf("result: %v", result)
 	},
 }
 
@@ -209,6 +191,7 @@ func main() {
 
 	rootCmd.AddCommand(fetchCmd)
 	rootCmd.AddCommand(initConfig)
+	rootCmd.AddCommand(fetchAllCmd)
 
 	rootCmd.Execute()
 }
