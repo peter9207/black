@@ -12,26 +12,20 @@ import (
 
 var requestURLTemplate = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=%s&outputsize=full&apikey=%s"
 
-type Fetcher interface {
-	Fetch(ticker string) error
-}
-
 type AlphaAdvantage struct {
 	ApiKey string
 	DB     *pg.DB
 }
 
 type Stock struct {
-	ID    string
-	Code  string
-	Date  string
-	Open  float64
-	High  float64
-	Low   float64
-	Close float64
-	// AdjClose float64
+	ID     string
+	Code   string
+	Date   string
+	Open   float64
+	High   float64
+	Low    float64
+	Close  float64
 	Volume int64
-	// Name     string
 }
 
 type AAResponse struct {
@@ -102,10 +96,6 @@ func (a *AAData) UnmarshalJSON(data []byte) error {
 }
 
 func (aa *AlphaAdvantage) Fetch(ticker string) (err error) {
-	fmt.Println("start")
-
-	// stocks = &StockData{}
-
 	var url = fmt.Sprintf(requestURLTemplate, ticker, aa.ApiKey)
 	fmt.Println("fetching data from ", url)
 
@@ -143,7 +133,6 @@ func (aa *AlphaAdvantage) Fetch(ticker string) (err error) {
 			Low:    v.Low,
 			Volume: v.Volume,
 		}
-		// stocks.Data = append(stocks.Data, s)
 		_, err = aa.DB.Model(s).Insert()
 		if err != nil {
 			fmt.Println(err.Error())
