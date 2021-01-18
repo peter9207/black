@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-pg/pg/v10"
+	"github.com/peter9207/black/stock"
 	"github.com/satori/go.uuid"
 	"io/ioutil"
 	"net/http"
@@ -17,16 +18,16 @@ type AlphaAdvantage struct {
 	DB     *pg.DB
 }
 
-type Stock struct {
-	ID     string
-	Code   string
-	Date   string
-	Open   float64
-	High   float64
-	Low    float64
-	Close  float64
-	Volume int64
-}
+// type Stock struct {
+// 	ID     string
+// 	Code   string
+// 	Date   string
+// 	Open   float64
+// 	High   float64
+// 	Low    float64
+// 	Close  float64
+// 	Volume int64
+// }
 
 type AAResponse struct {
 	Metadata map[string]string `json:"Meta Data"`
@@ -123,7 +124,7 @@ func (aa *AlphaAdvantage) Fetch(ticker string) (err error) {
 
 	for k, v := range response.Data {
 
-		s := &Stock{
+		s := &stock.Stock{
 			ID:     uuid.NewV4().String(),
 			Date:   k,
 			Code:   ticker,
@@ -133,7 +134,9 @@ func (aa *AlphaAdvantage) Fetch(ticker string) (err error) {
 			Low:    v.Low,
 			Volume: v.Volume,
 		}
-		_, err = aa.DB.Model(s).Insert()
+		// _, err = aa.DB.Model(s).Insert()
+
+		err = s.Save(aa.DB)
 		if err != nil {
 			fmt.Println(err.Error())
 		}
