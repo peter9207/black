@@ -15,16 +15,16 @@ func fetch(fetcher fetchers.Fetcher, ticker string) (err error) {
 }
 
 var fetchAllCmd = &cobra.Command{
-	Use:   "fetchAll ",
+	Use:   "fetchAll",
 	Short: "fetch data from AA for all stored tickers",
 	Run: func(cmd *cobra.Command, args []string) {
 		db, err := ConnectDB(viper.GetString("database_url"))
-		if err !=nil{
+		if err != nil {
 			panic(err)
 		}
 		fetcher := &fetchers.AlphaAdvantage{
 			ApiKey: viper.GetString("aa_apikey"),
-			DB: db,
+			DB:     db,
 		}
 
 		for _, v := range sp500 {
@@ -52,13 +52,13 @@ var fetchCmd = &cobra.Command{
 
 		ticker := args[0]
 		db, err := ConnectDB(viper.GetString("database_url"))
-		if err !=nil{
+		if err != nil {
 			panic(err)
 		}
 
 		fetcher := &fetchers.AlphaAdvantage{
 			ApiKey: viper.GetString("aa_apikey"),
-			DB: db,
+			DB:     db,
 		}
 
 		err = fetch(fetcher, ticker)

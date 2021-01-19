@@ -1,23 +1,20 @@
 package main
 
 import (
+	"fmt"
 	"github.com/go-pg/pg/v10"
 	"github.com/peter9207/black/datapoint"
 	"github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"time"
 )
 
 var groupCmd = &cobra.Command{
-	Use:   "group",
+	Use:   "group <type>",
 	Short: "grouping data by various metrics",
-}
-
-var groupMaxCmd = &cobra.Command{
-	Use:   "max <filename>",
-	Short: "group data by months and find max",
-	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
+
 		if len(args) < 1 {
 			err := cmd.Help()
 			if err != nil {
@@ -26,36 +23,20 @@ var groupMaxCmd = &cobra.Command{
 			return
 		}
 
-		// csvFile := args[0]
-		// name := path.Base(csvFile)
+		t := args[0]
 
-		// stocks, err := readExport(name, csvFile)
-		// if err != nil {
-		// 	panic(err)
-		// }
+		switch t {
 
-		// data := []datapoint.Data{}
-		// for _, v := range stocks {
+		case "max":
+			agg := datapoint.DatapointAggregator{DBURL: viper.GetString("database_url")}
+			e := agg.GroupDatapointsByMonth()
+			if e != nil {
+				panic(e)
+			}
 
-		// 	d := datapoint.Data{
-		// 		Name:  v.Date,
-		// 		Value: v.High,
-		// 	}
-		// 	data = append(data, d)
-		// }
-
-		// db, err := ConnectDB("postgres://postgres:password@localhost:5432/postgres?sslmode=disable")
-		// if err != nil {
-		// 	panic(err)
-		// }
-
-		// results := datapoint.GroupDatapointsByMonth(data)
-
-		// for _, v := range results {
-		// 	if err := saveDatapoint(v, name, db); err != nil {
-		// 		fmt.Println(err.Error())
-		// 	}
-		// }
+		default:
+			fmt.Println("unknown command ", t)
+		}
 
 	},
 }

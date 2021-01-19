@@ -6,9 +6,11 @@ import (
 	"github.com/go-pg/pg/v10"
 	"github.com/peter9207/black/stock"
 	"github.com/satori/go.uuid"
+	"github.com/segmentio/kafka-go"
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 var requestURLTemplate = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=%s&outputsize=full&apikey=%s"
@@ -17,17 +19,6 @@ type AlphaAdvantage struct {
 	ApiKey string
 	DB     *pg.DB
 }
-
-// type Stock struct {
-// 	ID     string
-// 	Code   string
-// 	Date   string
-// 	Open   float64
-// 	High   float64
-// 	Low    float64
-// 	Close  float64
-// 	Volume int64
-// }
 
 type AAResponse struct {
 	Metadata map[string]string `json:"Meta Data"`
@@ -96,6 +87,71 @@ func (a *AAData) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (aa *AlphaAdvantage) ToKafka(ticker string, conn *kafka.Conn) (err error) {
+
+	fmt.Println("starting to fetch ", ticker)
+
+	stocks, err := aa.readTickerRequest(ticker)
+	if err != nil {
+		return
+	}
+
+	conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+
+	for _, v := range stocks {
+
+		jsonData, err := json.Marshal(v)
+		if err != nil {
+			return err
+		}
+
+		msg := kafka.Message{Value: jsonData, Key: []byte(v.ID)}
+
+		_, err = conn.WriteMessages(msg)
+		if err != nil {
+			return err
+		}
+	}
+
+	return
+}
+
+func (aa *AlphaAdvantage) readTickerRequest(ticker string) (stocks []*stock.Stock, err error) {
+	var url = fmt.Sprintf(requestURLTemplate, ticker, aa.ApiKey)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+	response := AAResponse{}
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return
+	}
+	for k, v := range response.Data {
+
+		s := &stock.Stock{
+			ID:     uuid.NewV4().String(),
+			Date:   k,
+			Code:   ticker,
+			Open:   v.Open,
+			Close:  v.Close,
+			High:   v.High,
+			Low:    v.Low,
+			Volume: v.Volume,
+		}
+
+		stocks = append(stocks, s)
+	}
+	return
+}
+
 func (aa *AlphaAdvantage) Fetch(ticker string) (err error) {
 	var url = fmt.Sprintf(requestURLTemplate, ticker, aa.ApiKey)
 	fmt.Println("fetching data from ", url)
@@ -134,7 +190,6 @@ func (aa *AlphaAdvantage) Fetch(ticker string) (err error) {
 			Low:    v.Low,
 			Volume: v.Volume,
 		}
-		// _, err = aa.DB.Model(s).Insert()
 
 		err = s.Save(aa.DB)
 		if err != nil {
