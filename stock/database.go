@@ -1,6 +1,11 @@
 package stock
 
-import "github.com/go-pg/pg/v10"
+import (
+	"encoding/json"
+	"fmt"
+	"github.com/go-pg/pg/v10"
+	"github.com/segmentio/kafka-go"
+)
 
 type Stock struct {
 	ID     string  `json:"id"`
@@ -16,4 +21,27 @@ type Stock struct {
 func (s *Stock) Save(db *pg.DB) error {
 	_, err := db.Model(s).Insert()
 	return err
+}
+
+func Consume(conn *kafka.Conn, db *pg.DB) (err error) {
+	batch := conn.ReadBatch(10e2, 1e6) // fetch 10KB min, 1MB max
+
+	b := make([]byte, 10e3) // 10KB max per message
+	for {
+		_, err := batch.Read(b)
+		if err != nil {
+			break
+		}
+		stock := Stock{}
+		err = json.Unmarshal(b, &stock)
+		if err != nil {
+			return err
+		}
+
+		err = stock.Save(db)
+		if err != nil {
+			return err
+		}
+	}
+	return
 }
