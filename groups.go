@@ -1,11 +1,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"github.com/go-pg/pg/v10"
-	"github.com/peter9207/black/datapoint"
 	"github.com/peter9207/black/stock"
-	"github.com/satori/go.uuid"
 	"github.com/segmentio/kafka-go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -50,6 +48,6 @@ func loadFromKafka() error {
 		log.Fatal("failed to dial leader:", err)
 	}
 
-	err := stock.Consume(conn, db)
+	err = stock.Consume(conn, db)
 	return err
 }

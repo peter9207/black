@@ -2,7 +2,6 @@ package stock
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/go-pg/pg/v10"
 	"github.com/segmentio/kafka-go"
 )

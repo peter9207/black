@@ -155,7 +155,7 @@ func main() {
 	rootCmd.AddCommand(simpleCmd)
 	rootCmd.AddCommand(testCmd)
 
-	rootCmd.AddCommand(groupCmd)
+	rootCmd.AddCommand(loadCmd)
 
 	rootCmd.AddCommand(fetchCmd)
 	rootCmd.AddCommand(initConfig)
