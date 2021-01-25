@@ -1,0 +1,19 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: downloadJob
+spec:
+  template:
+    spec:
+      containers:
+      - name: DownloadJob
+        env:
+          - name: KAFKA_BROKER
+            value: "10.42.0.12:9092"
+          - name: KAFKA_BROKER
+            secret:
+              secretName: alpha-advantage-apikey
+        image: black:latest
+        command: ["black",  "printEnv" ]
+      restartPolicy: Never
+  backoffLimit: 4
