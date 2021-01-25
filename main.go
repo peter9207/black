@@ -29,17 +29,11 @@ func parseInt(s string) (i int64) {
 }
 
 var simpleCmd = &cobra.Command{
-	Use:   "simple <filename>",
-	Short: "a simple rolling average calculation",
+	Use:   "printEnv",
+	Short: "print a list of current config parameters",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) < 2 {
-			err := cmd.Help()
-			if err != nil {
-				panic(err)
-			}
-			return
-		}
+		printEnv()
 	},
 }
 
@@ -132,11 +126,25 @@ var downloadCmd = &cobra.Command{
 	},
 }
 
+func printEnv() {
+
+	knownEnvs := []string{
+		"database_url", "AA_APIKEY", "kafka_broker",
+	}
+
+	for _, v := range knownEnvs {
+		fmt.Printf("%s : %s\n", v, viper.GetString(v))
+	}
+
+}
+
 func main() {
 
 	viper.SetConfigName("config")
 	viper.AddConfigPath(".")
 	viper.SetConfigType("yaml")
+
+	viper.AutomaticEnv()
 
 	viper.SetDefault("DATABASE_URL", "postgres://postgres:password@localhost:5432/postgres?sslmode=disable")
 	viper.SetDefault("AA_APIKEY", "no_default")

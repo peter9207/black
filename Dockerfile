@@ -12,6 +12,6 @@ EXPOSE 5000
 
 RUN go build
 
-CMD ["./black"]
+ENTRYPOINT ["./black"]
 
 
