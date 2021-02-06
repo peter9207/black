@@ -1,21 +1,21 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: download-job
+  name: download2
 spec:
   template:
     spec:
       restartPolicy: Never
       containers:
-      - name: download-job
+      - name: download2
         env:
           - name: KAFKA_BROKER
             value: "10.42.0.12:9092"
-          - name: KAFKA_BROKER
+          - name: AA_APIKEY
             valueFrom:
               secretKeyRef:
                 name: alpha-advantage-apikey
                 key: value
-        image: black:latest
+        image: ghcr.io/peter9207/black:latest
         command: ["black",  "printEnv" ]
   backoffLimit: 4
