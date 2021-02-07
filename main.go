@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/peter9207/black/datapoint"
 	"github.com/peter9207/black/fetchers"
 	"github.com/segmentio/kafka-go"
 	"github.com/spf13/cobra"
@@ -64,7 +65,7 @@ var testCmd = &cobra.Command{
 }
 
 var rootCmd = &cobra.Command{
-	Use:   "S",
+	Use:   "black",
 	Short: "an attempt to try various means of analysing stocks data",
 }
 
@@ -138,6 +139,23 @@ func printEnv() {
 
 }
 
+var aggCmd = &cobra.Command{
+	Use:   "agg",
+	Short: "process various types of data",
+	Run: func(cmd *cobra.Command, args []string) {
+
+		agg := datapoint.DatapointAggregator{
+			DBURL: viper.GetString("database_url"),
+		}
+
+		err := agg.GroupMonthlyMax()
+		if err != nil {
+			panic(err)
+		}
+
+	},
+}
+
 func main() {
 
 	viper.SetConfigName("config")
@@ -162,6 +180,8 @@ func main() {
 	testCmd.AddCommand(esCmd)
 	rootCmd.AddCommand(simpleCmd)
 	rootCmd.AddCommand(testCmd)
+
+	rootCmd.AddCommand(aggCmd)
 
 	rootCmd.AddCommand(loadCmd)
 
