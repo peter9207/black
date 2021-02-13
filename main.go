@@ -142,6 +142,23 @@ func printEnv() {
 var aggCmd = &cobra.Command{
 	Use:   "agg",
 	Short: "process various types of data",
+	// Run: func(cmd *cobra.Command, args []string) {
+
+	// 	agg := datapoint.DatapointAggregator{
+	// 		DBURL: viper.GetString("database_url"),
+	// 	}
+
+	// 	err := agg.GroupMonthlyMax()
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
+
+	// },
+}
+
+var monthlyMaxCmd = &cobra.Command{
+	Use:   "monthlyMax",
+	Short: "process various types of data",
 	Run: func(cmd *cobra.Command, args []string) {
 
 		agg := datapoint.DatapointAggregator{
@@ -149,6 +166,19 @@ var aggCmd = &cobra.Command{
 		}
 
 		err := agg.GroupMonthlyMax()
+		if err != nil {
+			panic(err)
+		}
+
+	},
+}
+
+var relationshipsCmd = &cobra.Command{
+	Use:   "relationships",
+	Short: "process various types of data",
+	Run: func(cmd *cobra.Command, args []string) {
+
+		err := datapoint.CountRelationships(viper.GetString("database_url"))
 		if err != nil {
 			panic(err)
 		}
@@ -182,6 +212,8 @@ func main() {
 	rootCmd.AddCommand(testCmd)
 
 	rootCmd.AddCommand(aggCmd)
+	aggCmd.AddCommand(relationshipsCmd)
+	aggCmd.AddCommand(monthlyMaxCmd)
 
 	rootCmd.AddCommand(loadCmd)
 
