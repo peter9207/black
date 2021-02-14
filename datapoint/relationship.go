@@ -18,7 +18,7 @@ type Relationship struct {
 }
 
 var groupQuery = `
-select string_agg(code, ' ') from datapoints
+select string_agg(code, ' '), key from datapoints
 group by type, key
 order by key
 `
@@ -37,12 +37,14 @@ func CountRelationships(url string) (err error) {
 	for rows.Next() {
 
 		var tickers string
+		var key string
 
-		err = rows.Scan(&tickers)
+		err = rows.Scan(&tickers, &key)
 		if err != nil {
 			return
 		}
 
+		fmt.Println("starting key", key)
 		err = saveRelationsAsync(tickers, conn)
 		if err != nil {
 			return
@@ -101,8 +103,8 @@ func saveRelationAsync(tickersCh chan []string, conn *pgxpool.Pool, errCh chan e
 }
 
 func saveRelationsAsync(tickerString string, conn *pgxpool.Pool) (err error) {
-	tickers := strings.Split(tickerString, " ")
 
+	tickers := strings.Split(tickerString, " ")
 	tickersCh := make(chan []string, 20)
 	errCh := make(chan error)
 
@@ -110,7 +112,7 @@ func saveRelationsAsync(tickerString string, conn *pgxpool.Pool) (err error) {
 
 	for i := 0; i < 5; i++ {
 		wg.Add(1)
-		fmt.Println("starting worker", i)
+		// fmt.Println("starting worker", i)
 		go func(waiting sync.WaitGroup) {
 			saveRelationAsync(tickersCh, conn, errCh)
 			wg.Done()
