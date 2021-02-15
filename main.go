@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/peter9207/black/datapoint"
 	"github.com/peter9207/black/fetchers"
 	"github.com/segmentio/kafka-go"
@@ -142,18 +143,33 @@ func printEnv() {
 var aggCmd = &cobra.Command{
 	Use:   "agg",
 	Short: "process various types of data",
-	// Run: func(cmd *cobra.Command, args []string) {
+}
+var windowMaxCmd = &cobra.Command{
+	Use:   "window <days>",
+	Short: "group maxes by their related max points",
+	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) < 1 {
+			cmd.Help()
+			return
+		}
 
-	// 	agg := datapoint.DatapointAggregator{
-	// 		DBURL: viper.GetString("database_url"),
-	// 	}
+		i, err := strconv.Atoi(args[0])
+		if err != nil {
+			panic(err)
+		}
 
-	// 	err := agg.GroupMonthlyMax()
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
+		conn, err := pgxpool.Connect(context.Background(), viper.GetString("database_url"))
+		if err != nil {
+			panic(err)
+		}
+		service := datapoint.NewService(conn)
 
-	// },
+		err = service.GroupBySimilarHighWithinWindow(i)
+		if err != nil {
+			panic(err)
+		}
+
+	},
 }
 
 var monthlyMaxCmd = &cobra.Command{
@@ -212,6 +228,8 @@ func main() {
 	rootCmd.AddCommand(testCmd)
 
 	rootCmd.AddCommand(aggCmd)
+
+	aggCmd.AddCommand(windowMaxCmd)
 	aggCmd.AddCommand(relationshipsCmd)
 	aggCmd.AddCommand(monthlyMaxCmd)
 
