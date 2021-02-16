@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/peter9207/black/datapoint"
 	"github.com/peter9207/black/fetchers"
 	"github.com/segmentio/kafka-go"
 	"github.com/spf13/cobra"
@@ -120,6 +118,21 @@ var downloadCmd = &cobra.Command{
 				time.Sleep(20 * time.Second)
 
 			}
+		case "database":
+			db, err := ConnectDB(viper.GetString("database_url"))
+			if err != nil {
+				panic(err)
+			}
+			fetcher := &fetchers.AlphaAdvantage{
+				ApiKey: viper.GetString("aa_apikey"),
+				DB:     db,
+			}
+			for _, v := range sp500 {
+				if err := fetch(fetcher, v); err != nil {
+					fmt.Println(err.Error())
+				}
+				time.Sleep(20 * time.Second)
+			}
 
 		default:
 			fmt.Println("invalid type")
@@ -143,63 +156,6 @@ func printEnv() {
 var aggCmd = &cobra.Command{
 	Use:   "agg",
 	Short: "process various types of data",
-}
-var windowMaxCmd = &cobra.Command{
-	Use:   "window <days>",
-	Short: "group maxes by their related max points",
-	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) < 1 {
-			cmd.Help()
-			return
-		}
-
-		i, err := strconv.Atoi(args[0])
-		if err != nil {
-			panic(err)
-		}
-
-		conn, err := pgxpool.Connect(context.Background(), viper.GetString("database_url"))
-		if err != nil {
-			panic(err)
-		}
-		service := datapoint.NewService(conn)
-
-		err = service.GroupBySimilarHighWithinWindow(i)
-		if err != nil {
-			panic(err)
-		}
-
-	},
-}
-
-var monthlyMaxCmd = &cobra.Command{
-	Use:   "monthlyMax",
-	Short: "process various types of data",
-	Run: func(cmd *cobra.Command, args []string) {
-
-		agg := datapoint.DatapointAggregator{
-			DBURL: viper.GetString("database_url"),
-		}
-
-		err := agg.GroupMonthlyMax()
-		if err != nil {
-			panic(err)
-		}
-
-	},
-}
-
-var relationshipsCmd = &cobra.Command{
-	Use:   "relationships",
-	Short: "process various types of data",
-	Run: func(cmd *cobra.Command, args []string) {
-
-		err := datapoint.CountRelationships(viper.GetString("database_url"))
-		if err != nil {
-			panic(err)
-		}
-
-	},
 }
 
 func main() {
@@ -237,7 +193,6 @@ func main() {
 
 	rootCmd.AddCommand(fetchCmd)
 	rootCmd.AddCommand(initConfig)
-	rootCmd.AddCommand(fetchAllCmd)
 	rootCmd.AddCommand(downloadCmd)
 
 	rootCmd.Execute()
