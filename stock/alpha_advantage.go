@@ -20,9 +20,17 @@ type AlphaAdvantage struct {
 	DB     *pg.DB
 }
 
+type AAMetadata struct {
+	Info          string `json:"1. Information"`
+	Symbol        string `json:"2. Symbol"`
+	LastRefreshed string `json:"3. Last Refreshed"`
+	Size          string `json:"4. Output Size"`
+	Timezone      string `json:"5. Time Zone"`
+}
+
 type AAResponse struct {
-	Metadata map[string]string `json:"Meta Data"`
-	Data     map[string]AAData `json:"Time Series (Daily)"`
+	Metadata map[string]AAMetadata `json:"Meta Data"`
+	Data     map[string]AAData     `json:"Time Series (Daily)"`
 }
 
 type AAData struct {
@@ -116,7 +124,7 @@ func (aa *AlphaAdvantage) ToKafka(ticker string, conn *kafka.Conn) (err error) {
 	return
 }
 
-func (aa *AlphaAdvantage) readTickerRequest(ticker string) (stocks []*stock.Stock, err error) {
+func (aa *AlphaAdvantage) readTickerRequest(ticker string) (stocks []*stock.StockData, err error) {
 	var url = fmt.Sprintf(requestURLTemplate, ticker, aa.ApiKey)
 
 	resp, err := http.Get(url)
@@ -136,7 +144,7 @@ func (aa *AlphaAdvantage) readTickerRequest(ticker string) (stocks []*stock.Stoc
 	}
 	for k, v := range response.Data {
 
-		s := &stock.Stock{
+		s := &stock.StockData{
 			ID:     uuid.NewV4().String(),
 			Date:   k,
 			Code:   ticker,
@@ -180,7 +188,7 @@ func (aa *AlphaAdvantage) Fetch(ticker string) (err error) {
 
 	for k, v := range response.Data {
 
-		s := &stock.Stock{
+		s := &stock.StockData{
 			ID:     uuid.NewV4().String(),
 			Date:   k,
 			Code:   ticker,

@@ -6,7 +6,7 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-type Stock struct {
+type StockData struct {
 	ID     string  `json:"id"`
 	Code   string  `json:"code"`
 	Date   string  `json:"date"`
@@ -17,7 +17,7 @@ type Stock struct {
 	Volume int64   `json:"volume"`
 }
 
-func (s *Stock) Save(db *pg.DB) error {
+func (s *StockData) Save(db *pg.DB) error {
 	_, err := db.Model(s).Insert()
 	return err
 }
@@ -31,7 +31,7 @@ func Consume(conn *kafka.Conn, db *pg.DB) (err error) {
 		if err != nil {
 			break
 		}
-		stock := Stock{}
+		stock := StockData{}
 		err = json.Unmarshal(b, &stock)
 		if err != nil {
 			return err
