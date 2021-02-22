@@ -1,15 +1,10 @@
 package main
 
 import (
-	"github.com/peter9207/black/fetchers"
+	"github.com/peter9207/black/stock"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
-
-func fetch(fetcher fetchers.Fetcher, ticker string) (err error) {
-	err = fetcher.Fetch(ticker)
-	return
-}
 
 var fetchCmd = &cobra.Command{
 	Use:   "fetch <ticker>",
@@ -25,17 +20,12 @@ var fetchCmd = &cobra.Command{
 		}
 
 		ticker := args[0]
-		db, err := ConnectDB(viper.GetString("database_url"))
+		conn, err := pgxpool.Connect(context.Background(), viper.GetString("database_url"))
 		if err != nil {
 			panic(err)
 		}
-
-		fetcher := &fetchers.AlphaAdvantage{
-			ApiKey: viper.GetString("aa_apikey"),
-			DB:     db,
-		}
-
-		err = fetch(fetcher, ticker)
+		stockService := stock.NewService(conn, viper.GetString("aa_apikey"))
+		err = stockService.FetchData(ticker)
 		if err != nil {
 			panic(err)
 		}

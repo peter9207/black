@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/go-pg/pg/v10"
 	"github.com/segmentio/kafka-go"
+	"time"
 )
 
 type StockData struct {
@@ -15,6 +16,12 @@ type StockData struct {
 	Low    float64 `json:"low"`
 	Close  float64 `json:"close"`
 	Volume int64   `json:"volume"`
+}
+
+type Stock struct {
+	Ticker          string    `json:"ticker"`
+	LastUpdatedDate time.Time `json:"lastUpdatedAt"`
+	Description     string    `json:"description"`
 }
 
 func (s *StockData) Save(db *pg.DB) error {

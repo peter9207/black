@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/peter9207/black/fetchers"
 	"github.com/segmentio/kafka-go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -95,14 +94,14 @@ var downloadCmd = &cobra.Command{
 
 		location := args[0]
 
-		db, err := ConnectDB(viper.GetString("database_url"))
+		dbURL := viper.GetString("database_url")
+		apiKey := viper.GetString("aa_apikey")
+
+		conn, err := pgxpool.Connect(context.Background(), dbURL)
 		if err != nil {
 			panic(err)
 		}
-		fetcher := &fetchers.AlphaAdvantage{
-			ApiKey: viper.GetString("aa_apikey"),
-			DB:     db,
-		}
+		stockService := stock.NewService(conn, apiKey)
 
 		switch location {
 		case "kafka":
@@ -111,25 +110,17 @@ var downloadCmd = &cobra.Command{
 				log.Fatal("failed to dial leader:", err)
 			}
 			for _, v := range sp500 {
-				err = fetcher.ToKafka(v, conn)
-				if err != nil {
-					panic(err)
-				}
+				// err = fetcher.ToKafka(v, conn)
+				// if err != nil {
+				// 	panic(err)
+				// }
 				time.Sleep(20 * time.Second)
 
 			}
 		case "database":
-			db, err := ConnectDB(viper.GetString("database_url"))
-			if err != nil {
-				panic(err)
-			}
-			fetcher := &fetchers.AlphaAdvantage{
-				ApiKey: viper.GetString("aa_apikey"),
-				DB:     db,
-			}
 			for _, v := range sp500 {
-				if err := fetch(fetcher, v); err != nil {
-					fmt.Println(err.Error())
+				if err = stockService.FetchData(v); err != nil {
+					fmt.Println(err)
 				}
 				time.Sleep(20 * time.Second)
 			}

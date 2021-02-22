@@ -1,10 +1,9 @@
-package fetchers
+package stock
 
 import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-pg/pg/v10"
-	"github.com/peter9207/black/stock"
 	"github.com/satori/go.uuid"
 	"github.com/segmentio/kafka-go"
 	"io/ioutil"
@@ -29,8 +28,8 @@ type AAMetadata struct {
 }
 
 type AAResponse struct {
-	Metadata map[string]AAMetadata `json:"Meta Data"`
-	Data     map[string]AAData     `json:"Time Series (Daily)"`
+	Metadata AAMetadata        `json:"Meta Data"`
+	Data     map[string]AAData `json:"Time Series (Daily)"`
 }
 
 type AAData struct {
@@ -124,7 +123,7 @@ func (aa *AlphaAdvantage) ToKafka(ticker string, conn *kafka.Conn) (err error) {
 	return
 }
 
-func (aa *AlphaAdvantage) readTickerRequest(ticker string) (stocks []*stock.StockData, err error) {
+func (aa *AlphaAdvantage) readTickerRequest(ticker string) (stocks []*StockData, err error) {
 	var url = fmt.Sprintf(requestURLTemplate, ticker, aa.ApiKey)
 
 	resp, err := http.Get(url)
@@ -144,7 +143,7 @@ func (aa *AlphaAdvantage) readTickerRequest(ticker string) (stocks []*stock.Stoc
 	}
 	for k, v := range response.Data {
 
-		s := &stock.StockData{
+		s := &StockData{
 			ID:     uuid.NewV4().String(),
 			Date:   k,
 			Code:   ticker,
@@ -161,6 +160,7 @@ func (aa *AlphaAdvantage) readTickerRequest(ticker string) (stocks []*stock.Stoc
 }
 
 func (aa *AlphaAdvantage) Fetch(ticker string) (err error) {
+
 	var url = fmt.Sprintf(requestURLTemplate, ticker, aa.ApiKey)
 	fmt.Println("fetching data from ", url)
 
@@ -175,7 +175,7 @@ func (aa *AlphaAdvantage) Fetch(ticker string) (err error) {
 		return
 	}
 
-	fmt.Println("got back bytes ", len(body))
+	// fmt.Println("got back bytes ", len(body))
 
 	response := AAResponse{}
 	err = json.Unmarshal(body, &response)
@@ -188,7 +188,7 @@ func (aa *AlphaAdvantage) Fetch(ticker string) (err error) {
 
 	for k, v := range response.Data {
 
-		s := &stock.StockData{
+		s := &StockData{
 			ID:     uuid.NewV4().String(),
 			Date:   k,
 			Code:   ticker,
