@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/peter9207/black/stock"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -20,11 +22,14 @@ var fetchCmd = &cobra.Command{
 		}
 
 		ticker := args[0]
-		conn, err := pgxpool.Connect(context.Background(), viper.GetString("database_url"))
+		dbURL := viper.GetString("database_url")
+		apiKey := viper.GetString("aa_apikey")
+
+		conn, err := pgxpool.Connect(context.Background(), dbURL)
 		if err != nil {
 			panic(err)
 		}
-		stockService := stock.NewService(conn, viper.GetString("aa_apikey"))
+		stockService := stock.NewService(conn, apiKey)
 		err = stockService.FetchData(ticker)
 		if err != nil {
 			panic(err)

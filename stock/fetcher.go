@@ -7,6 +7,7 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/satori/go.uuid"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"time"
 )
@@ -28,7 +29,7 @@ func NewService(conn *pgxpool.Pool, apiKey string) (s Service) {
 	return
 }
 
-var getLatestQuery = `select id, date from stock_data where code = $1 order by date desc limit 1`
+var getLatestQuery = `select date from stock_data where code = $1 order by date desc limit 1`
 var insertStockDataQuery = `
 INSERT INTO "stock_data" ("id", "code", "date", "open", "close", "high", "low", "volume")
                   VALUES ($1,     $2,     $3,    $4,     $5,     $6,      $7,     $8); `
@@ -40,6 +41,7 @@ func (s Service) FetchData(ticker string) (err error) {
 
 	err = s.conn.QueryRow(context.Background(), getLatestQuery, ticker).Scan(&lastDate)
 	if err != nil {
+		log.Println("error querying existing data", err)
 		return
 	}
 
@@ -48,6 +50,7 @@ func (s Service) FetchData(ticker string) (err error) {
 
 	resp, err := http.Get(url)
 	if err != nil {
+		log.Println("Error querying AA", err)
 		return
 	}
 	defer resp.Body.Close()
@@ -60,6 +63,7 @@ func (s Service) FetchData(ticker string) (err error) {
 	response := AAResponse{}
 	err = json.Unmarshal(body, &response)
 	if err != nil {
+		log.Println("Error parsing json", err)
 		return
 	}
 
@@ -67,8 +71,9 @@ func (s Service) FetchData(ticker string) (err error) {
 	fmt.Println("name", stockName)
 
 	for k, v := range response.Data {
-		recordDate, err := time.Parse(k, dateFormat)
+		recordDate, err := time.Parse(dateFormat, k)
 		if err != nil {
+			log.Println("Error parsing date", err)
 			return err
 		}
 
@@ -80,8 +85,8 @@ func (s Service) FetchData(ticker string) (err error) {
 		_, err = s.conn.Exec(context.Background(),
 			insertStockDataQuery,
 			id,
-			k,
 			ticker,
+			k,
 			v.Open,
 			v.Close,
 			v.High,

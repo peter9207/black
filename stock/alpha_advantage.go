@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-pg/pg/v10"
-	"github.com/satori/go.uuid"
-	"github.com/segmentio/kafka-go"
-	"io/ioutil"
-	"net/http"
+	// "github.com/satori/go.uuid"
+	// "github.com/segmentio/kafka-go"
+	// "io/ioutil"
+	// "net/http"
 	"strconv"
-	"time"
+	// "time"
 )
 
 var requestURLTemplate = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=%s&outputsize=full&apikey=%s"
@@ -94,115 +94,113 @@ func (a *AAData) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (aa *AlphaAdvantage) ToKafka(ticker string, conn *kafka.Conn) (err error) {
+// func (aa *AlphaAdvantage) ToKafka(ticker string, conn *kafka.Conn) (err error) {
 
-	fmt.Println("starting to fetch ", ticker)
+// 	fmt.Println("starting to fetch ", ticker)
 
-	stocks, err := aa.readTickerRequest(ticker)
-	if err != nil {
-		return
-	}
+// 	stocks, err := aa.readTickerRequest(ticker)
+// 	if err != nil {
+// 		return
+// 	}
 
-	conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+// 	conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 
-	for _, v := range stocks {
+// 	for _, v := range stocks {
 
-		jsonData, err := json.Marshal(v)
-		if err != nil {
-			return err
-		}
+// 		jsonData, err := json.Marshal(v)
+// 		if err != nil {
+// 			return err
+// 		}
 
-		msg := kafka.Message{Value: jsonData, Key: []byte(v.ID)}
+// 		msg := kafka.Message{Value: jsonData, Key: []byte(v.ID)}
 
-		_, err = conn.WriteMessages(msg)
-		if err != nil {
-			return err
-		}
-	}
+// 		_, err = conn.WriteMessages(msg)
+// 		if err != nil {
+// 			return err
+// 		}
+// 	}
 
-	return
-}
+// 	return
+// }
 
-func (aa *AlphaAdvantage) readTickerRequest(ticker string) (stocks []*StockData, err error) {
-	var url = fmt.Sprintf(requestURLTemplate, ticker, aa.ApiKey)
+// func (aa *AlphaAdvantage) readTickerRequest(ticker string) (stocks []*StockData, err error) {
+// 	var url = fmt.Sprintf(requestURLTemplate, ticker, aa.ApiKey)
 
-	resp, err := http.Get(url)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
+// 	resp, err := http.Get(url)
+// 	if err != nil {
+// 		return
+// 	}
+// 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return
-	}
-	response := AAResponse{}
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		return
-	}
-	for k, v := range response.Data {
+// 	body, err := ioutil.ReadAll(resp.Body)
+// 	if err != nil {
+// 		return
+// 	}
+// 	response := AAResponse{}
+// 	err = json.Unmarshal(body, &response)
+// 	if err != nil {
+// 		return
+// 	}
+// 	for k, v := range response.Data {
 
-		s := &StockData{
-			ID:     uuid.NewV4().String(),
-			Date:   k,
-			Code:   ticker,
-			Open:   v.Open,
-			Close:  v.Close,
-			High:   v.High,
-			Low:    v.Low,
-			Volume: v.Volume,
-		}
+// 		s := &StockData{
+// 			ID:     uuid.NewV4().String(),
+// 			Date:   k,
+// 			Code:   ticker,
+// 			Open:   v.Open,
+// 			Close:  v.Close,
+// 			High:   v.High,
+// 			Low:    v.Low,
+// 			Volume: v.Volume,
+// 		}
 
-		stocks = append(stocks, s)
-	}
-	return
-}
+// 		stocks = append(stocks, s)
+// 	}
+// 	return
+// }
 
-func (aa *AlphaAdvantage) Fetch(ticker string) (err error) {
+// func (aa *AlphaAdvantage) Fetch(ticker string) (err error) {
 
-	var url = fmt.Sprintf(requestURLTemplate, ticker, aa.ApiKey)
-	fmt.Println("fetching data from ", url)
+// 	var url = fmt.Sprintf(requestURLTemplate, ticker, aa.ApiKey)
+// 	fmt.Println("fetching data from ", url)
 
-	resp, err := http.Get(url)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
+// 	resp, err := http.Get(url)
+// 	if err != nil {
+// 		return
+// 	}
+// 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return
-	}
+// 	body, err := ioutil.ReadAll(resp.Body)
+// 	if err != nil {
+// 		return
+// 	}
 
-	// fmt.Println("got back bytes ", len(body))
+// 	response := AAResponse{}
+// 	err = json.Unmarshal(body, &response)
+// 	if err != nil {
+// 		return
+// 	}
 
-	response := AAResponse{}
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		return
-	}
+// 	stockName := response.Metadata.Symbol
+// 	fmt.Println("name", stockName)
 
-	stockName := response.Metadata["2. Symbol"]
-	fmt.Println("name", stockName)
+// 	for k, v := range response.Data {
 
-	for k, v := range response.Data {
+// 		s := &StockData{
+// 			ID:     uuid.NewV4().String(),
+// 			Date:   k,
+// 			Code:   ticker,
+// 			Open:   v.Open,
+// 			Close:  v.Close,
+// 			High:   v.High,
+// 			Low:    v.Low,
+// 			Volume: v.Volume,
+// 		}
 
-		s := &StockData{
-			ID:     uuid.NewV4().String(),
-			Date:   k,
-			Code:   ticker,
-			Open:   v.Open,
-			Close:  v.Close,
-			High:   v.High,
-			Low:    v.Low,
-			Volume: v.Volume,
-		}
-
-		err = s.Save(aa.DB)
-		if err != nil {
-			fmt.Println(err.Error())
-		}
-	}
-	return
-}
+// 		err = s.Save(aa.DB)
+// 		if err != nil {
+// 			fmt.Println(err.Error())
+// 		}
+// 	}
+// 	return
+// }

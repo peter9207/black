@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/segmentio/kafka-go"
+	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/peter9207/black/stock"
+	// "github.com/segmentio/kafka-go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"log"
@@ -104,19 +106,19 @@ var downloadCmd = &cobra.Command{
 		stockService := stock.NewService(conn, apiKey)
 
 		switch location {
-		case "kafka":
-			conn, err := kafka.DialLeader(context.Background(), "tcp", viper.GetString("kafka_broker"), "stock-events", 0)
-			if err != nil {
-				log.Fatal("failed to dial leader:", err)
-			}
-			for _, v := range sp500 {
-				// err = fetcher.ToKafka(v, conn)
-				// if err != nil {
-				// 	panic(err)
-				// }
-				time.Sleep(20 * time.Second)
+		// case "kafka":
+		// conn, err := kafka.DialLeader(context.Background(), "tcp", viper.GetString("kafka_broker"), "stock-events", 0)
+		// if err != nil {
+		// 	log.Fatal("failed to dial leader:", err)
+		// }
+		// for _, v := range sp500 {
+		// 	err = fetcher.ToKafka(v, conn)
+		// 	if err != nil {
+		// 		panic(err)
+		// 	}
+		// 	time.Sleep(20 * time.Second)
 
-			}
+		// }
 		case "database":
 			for _, v := range sp500 {
 				if err = stockService.FetchData(v); err != nil {
@@ -180,7 +182,7 @@ func main() {
 	aggCmd.AddCommand(relationshipsCmd)
 	aggCmd.AddCommand(monthlyMaxCmd)
 
-	rootCmd.AddCommand(loadCmd)
+	// rootCmd.AddCommand(loadCmd)
 
 	rootCmd.AddCommand(fetchCmd)
 	rootCmd.AddCommand(initConfig)

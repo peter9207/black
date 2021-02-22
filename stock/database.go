@@ -1,9 +1,9 @@
 package stock
 
 import (
-	"encoding/json"
-	"github.com/go-pg/pg/v10"
-	"github.com/segmentio/kafka-go"
+	// "encoding/json"
+	// "github.com/go-pg/pg/v10"
+	// "github.com/segmentio/kafka-go"
 	"time"
 )
 
@@ -24,30 +24,30 @@ type Stock struct {
 	Description     string    `json:"description"`
 }
 
-func (s *StockData) Save(db *pg.DB) error {
-	_, err := db.Model(s).Insert()
-	return err
-}
+// func (s *StockData) Save(db *pg.DB) error {
+// 	_, err := db.Model(s).Insert()
+// 	return err
+// }
 
-func Consume(conn *kafka.Conn, db *pg.DB) (err error) {
-	batch := conn.ReadBatch(10e2, 1e6) // fetch 10KB min, 1MB max
+// func Consume(conn *kafka.Conn, db *pg.DB) (err error) {
+// 	batch := conn.ReadBatch(10e2, 1e6) // fetch 10KB min, 1MB max
 
-	b := make([]byte, 10e3) // 10KB max per message
-	for {
-		_, err := batch.Read(b)
-		if err != nil {
-			break
-		}
-		stock := StockData{}
-		err = json.Unmarshal(b, &stock)
-		if err != nil {
-			return err
-		}
+// 	b := make([]byte, 10e3) // 10KB max per message
+// 	for {
+// 		_, err := batch.Read(b)
+// 		if err != nil {
+// 			break
+// 		}
+// 		stock := StockData{}
+// 		err = json.Unmarshal(b, &stock)
+// 		if err != nil {
+// 			return err
+// 		}
 
-		err = stock.Save(db)
-		if err != nil {
-			return err
-		}
-	}
-	return
-}
+// 		err = stock.Save(db)
+// 		if err != nil {
+// 			return err
+// 		}
+// 	}
+// 	return
+// }
